@@ -1,0 +1,102 @@
+name: Backend tests (with Docker Compose)
+
+on:
+  push:
+    paths:
+      - 'api/**'
+      - 'cir/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'cir/**'
+      - 'docker-compose.yml'
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Ensure Docker Compose plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+
+      - name: Make runner executable (if present)
+        run: |
+          if [[ -f ./scripts/run_backend_tests.sh ]]; then chmod +x ./scripts/run_backend_tests.sh; fi
+
+      - name: Run backend tests (compose)
+        env:
+          COMPOSE_DOCKER_CLI_BUILD: 1
+          DOCKER_BUILDKIT: 1
+          SOLUTION_NAME: ${{ env.SOLUTION_NAME || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -x ./scripts/run_backend_tests.sh ]]; then
+            echo "Using repository-provided runner script"
+            ./scripts/run_backend_tests.sh --timeout 300 ${SOLUTION_NAME:+--solution "$SOLUTION_NAME"}
+            exit 0
+          fi
+
+          echo "No runner script found — performing steps directly"
+          docker compose up --build -d
+
+          timeout=300
+          deadline=$((SECONDS + timeout))
+          services=$(docker compose ps --services)
+          if [[ -z "$services" ]]; then
+            echo "No services found in docker compose. Proceeding without wait."
+          else
+            echo "Detected services: $services"
+            for s in $services; do
+              container=$(docker compose ps -q "$s")
+              echo "Waiting for service '$s' (container: $container)"
+              if [[ -z "$container" ]]; then
+                echo "  could not find container for $s; continuing"
+                continue
+              fi
+
+              ready=false
+              while [[ $SECONDS -lt $deadline ]]; do
+                status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)
+                if [[ "$status" == "healthy" || "$status" == "running" ]]; then
+                  echo "  $s is ready (status=$status)"
+                  ready=true
+                  break
+                fi
+                sleep 2
+              done
+
+              if [[ "$ready" != true ]]; then
+                echo "Warning: $s did not become healthy/running within $timeout seconds. Proceeding anyway."
+              fi
+            done
+          fi
+
+          # discover solution
+          SOL="${SOLUTION_NAME:-$(ls *.sln 2>/dev/null | head -n1 || true)}"
+          if [[ -n "$SOL" && command -v dotnet >/dev/null 2>&1 ]]; then
+            echo "Running dotnet test '$SOL'"
+            dotnet test "$SOL"
+            exit 0
+          fi
+
+          # fallbacks
+          if [[ -f Makefile && $(grep -E "^test:" Makefile || true) ]]; then
+            echo "Running 'make test'"
+            make test
+          elif command -v pytest >/dev/null 2>&1; then
+            echo "Running 'pytest'"
+            pytest
+          else
+            echo "No test runner found (dotnet, Makefile/test, or pytest). Please run tests manually."
+            exit 1
+          fi
