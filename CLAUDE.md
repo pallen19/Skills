@@ -20,17 +20,19 @@ This is a **Copilot Skills repository** that provides AI-assisted backend testin
 
 ```
 Skills/
-├── .copilot/skills/          # Copilot skill definitions
-│   ├── building-backend.json # Backend build/test skill
-│   └── debugging-tests.json  # Test debugging skill
-├── .github/workflows/        # CI/CD workflows
-│   └── backend-tests.yml     # Backend test workflow
-├── docs/                     # Documentation
-│   ├── BUILDING_BACKEND.md   # Backend skill documentation
-│   └── DEBUGGING_TESTS.md    # Debugging skill documentation
-├── scripts/                  # Executable scripts
-│   └── run_backend_tests.sh  # Test runner script
-└── README.md                 # Project overview
+├── .copilot/skills/                    # Copilot skill definitions
+│   ├── building-backend/
+│   │   └── SKILL.md                    # Backend build/test skill
+│   └── debugging-tests/
+│       └── SKILL.md                    # Test debugging skill
+├── .github/workflows/                  # CI/CD workflows
+│   └── backend-tests.yml               # Backend test workflow
+├── docs/                               # Documentation
+│   ├── BUILDING_BACKEND.md             # Backend skill documentation
+│   └── DEBUGGING_TESTS.md              # Debugging skill documentation
+├── scripts/                            # Executable scripts
+│   └── run_backend_tests.sh            # Test runner script
+└── README.md                           # Project overview
 ```
 
 ## Common Commands

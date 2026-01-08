@@ -1,0 +1,56 @@
+# debugging-tests
+
+Debug test failures by ensuring containers are rebuilt and stable before running tests.
+
+## Description
+
+This skill helps debug test failures by ensuring the Docker environment is fresh and stable. When there are ANY changes to the API or core projects, containers MUST be torn down and rebuilt using `docker compose down` followed by `docker compose up --build -d`. The skill verifies all containers are running and stable before executing tests.
+
+## Usage
+
+- ALWAYS check for changes to `api/` or core project directories before running tests.
+- If ANY changes exist in `api/` or core projects, run `docker compose down` first to ensure a clean state.
+- Then run `docker compose up --build -d` to rebuild and start fresh containers.
+- Wait for ALL containers to be healthy/running and stable (not restarting) before proceeding.
+- Only after containers are verified stable, run the test suite.
+- If tests still fail, check container logs with `docker compose logs <service>` for debugging.
+
+## Change Detection Paths
+
+- `api/**`
+- `cir/**`
+- `src/**`
+- `core/**`
+
+## Steps
+
+1. Check for changes in `api/` or core project directories
+2. If changes detected: run `docker compose down` to tear down existing containers
+3. Run `docker compose up --build -d` to rebuild and start containers
+4. Wait for containers to report HEALTH=healthy or State=running
+5. Verify containers are stable (not restarting) for at least 10 seconds
+6. Run tests: `dotnet test <solution>` or fallback to `make test` / `pytest`
+7. If tests fail, check `docker compose logs` for container issues
+
+## Container Verification
+
+- Health check timeout: 300 seconds
+- Stability check: 10 seconds
+- Useful commands:
+  - `docker compose ps --format json`
+  - `docker compose logs --tail=50`
+
+## Examples
+
+**My tests are failing after I changed the API:**
+Run `docker compose down`, then `docker compose up --build -d`, wait for containers to be healthy and stable, then run tests.
+
+**Debug why the backend tests aren't passing:**
+Check for recent changes, tear down and rebuild containers, verify stability, run tests, and check logs if failures persist.
+
+**Tests were working yesterday but fail today:**
+Force a clean rebuild with `docker compose down && docker compose up --build -d`, verify all containers are stable, then run tests.
+
+## Notes
+
+The key difference from building-backend is that this skill enforces a full container teardown when changes are detected. This ensures no stale state interferes with debugging. Always verify container stability by checking that containers remain in 'running' state for at least 10 seconds without restarts.
