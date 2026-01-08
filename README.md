@@ -7,6 +7,8 @@ AI skills repository
 
 - **debugging-tests** — Helps debug test failures by ensuring containers are torn down and rebuilt when changes are detected in API or core projects. Verifies container stability before running tests. See `.copilot/skills/debugging-tests/SKILL.md` for details.
 
+- **frontend-ui** — Starts the frontend UI for visual verification. Ensures dependencies are installed via yarn/pnpm before starting the dev server. See `.copilot/skills/frontend-ui/SKILL.md` for details.
+
 ### Quick start
 
 follow these steps directly:

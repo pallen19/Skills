@@ -6,6 +6,7 @@ This is a **Copilot Skills repository** that provides AI-assisted backend testin
 
 - **building-backend** - Ensures backend tests run reliably by managing Docker Compose services and waiting for container readiness before executing tests.
 - **debugging-tests** - Helps debug test failures by enforcing full container teardown and rebuild when changes are detected in API or core projects.
+- **frontend-ui** - Starts the frontend UI for visual verification, ensuring dependencies are installed first via yarn/pnpm.
 
 ## Tech Stack
 
@@ -23,8 +24,10 @@ Skills/
 ├── .copilot/skills/                    # Copilot skill definitions
 │   ├── building-backend/
 │   │   └── SKILL.md                    # Backend build/test skill
-│   └── debugging-tests/
-│       └── SKILL.md                    # Test debugging skill
+│   ├── debugging-tests/
+│   │   └── SKILL.md                    # Test debugging skill
+│   └── frontend-ui/
+│       └── SKILL.md                    # Frontend UI startup skill
 ├── .github/workflows/                  # CI/CD workflows
 │   └── backend-tests.yml               # Backend test workflow
 ├── docs/                               # Documentation
