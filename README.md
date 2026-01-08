@@ -5,6 +5,8 @@ AI skills repository
 
 - **building-backend** — Ensures backend tests are run reliably by building Docker Compose services and waiting for containers to be healthy before running tests. See `docs/BUILDING_BACKEND.md` and `.copilot/skills/building-backend.json` for details and usage.
 
+- **debugging-tests** — Helps debug test failures by ensuring containers are torn down and rebuilt when changes are detected in API or core projects. Verifies container stability before running tests. See `docs/DEBUGGING_TESTS.md` and `.copilot/skills/debugging-tests.json` for details and usage.
+
 ### Quick start
 
 follow these steps directly:

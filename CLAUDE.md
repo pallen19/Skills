@@ -2,7 +2,10 @@
 
 ## Project Overview
 
-This is a **Copilot Skills repository** that provides AI-assisted backend testing capabilities. The primary skill, "building-backend", ensures backend tests run reliably by managing Docker Compose services and waiting for container readiness before executing tests.
+This is a **Copilot Skills repository** that provides AI-assisted backend testing capabilities. The skills include:
+
+- **building-backend** - Ensures backend tests run reliably by managing Docker Compose services and waiting for container readiness before executing tests.
+- **debugging-tests** - Helps debug test failures by enforcing full container teardown and rebuild when changes are detected in API or core projects.
 
 ## Tech Stack
 
@@ -18,11 +21,13 @@ This is a **Copilot Skills repository** that provides AI-assisted backend testin
 ```
 Skills/
 ├── .copilot/skills/          # Copilot skill definitions
-│   └── building-backend.json # Main skill configuration
+│   ├── building-backend.json # Backend build/test skill
+│   └── debugging-tests.json  # Test debugging skill
 ├── .github/workflows/        # CI/CD workflows
 │   └── backend-tests.yml     # Backend test workflow
 ├── docs/                     # Documentation
-│   └── BUILDING_BACKEND.md   # Detailed skill documentation
+│   ├── BUILDING_BACKEND.md   # Backend skill documentation
+│   └── DEBUGGING_TESTS.md    # Debugging skill documentation
 ├── scripts/                  # Executable scripts
 │   └── run_backend_tests.sh  # Test runner script
 └── README.md                 # Project overview
@@ -45,13 +50,22 @@ docker compose up --build -d
 
 # Run dotnet tests directly
 dotnet test <solution.sln>
+
+# Debug tests (full teardown and rebuild)
+docker compose down && docker compose up --build -d
+
+# Check container status
+docker compose ps --format "table {{.Name}}\t{{.Status}}"
+
+# View container logs
+docker compose logs --tail=50
 ```
 
 ## Development Guidelines
 
 1. **Skill Definitions**: Skill JSON files in `.copilot/skills/` define triggers, usage instructions, and preferred commands
 2. **Scripts**: Test runner scripts should handle Docker Compose lifecycle and support multiple test frameworks
-3. **Documentation**: Keep `docs/BUILDING_BACKEND.md` updated when modifying skill behavior
+3. **Documentation**: Keep `docs/BUILDING_BACKEND.md` and `docs/DEBUGGING_TESTS.md` updated when modifying skill behavior
 
 ## Testing
 
