@@ -1,56 +1,51 @@
-# debugging-tests
+---
+name: debugging-tests
+description: Debug test failures by ensuring containers are torn down and rebuilt when changes are detected. Use this when tests are failing, when debugging test issues, or when tests worked before but now fail.
+---
 
-Debug test failures by ensuring containers are rebuilt and stable before running tests.
+To debug failing tests, follow this process to ensure a clean Docker environment:
 
-## Description
+1. Check for changes in `api/`, `cir/`, `src/`, or `core/` directories:
+   ```bash
+   git status --porcelain api/ cir/ src/ core/
+   ```
 
-This skill helps debug test failures by ensuring the Docker environment is fresh and stable. When there are ANY changes to the API or core projects, containers MUST be torn down and rebuilt using `docker compose down` followed by `docker compose up --build -d`. The skill verifies all containers are running and stable before executing tests.
+2. If ANY changes are detected, tear down existing containers first:
+   ```bash
+   docker compose down
+   ```
 
-## Usage
+3. Rebuild and start fresh containers:
+   ```bash
+   docker compose up --build -d
+   ```
 
-- ALWAYS check for changes to `api/` or core project directories before running tests.
-- If ANY changes exist in `api/` or core projects, run `docker compose down` first to ensure a clean state.
-- Then run `docker compose up --build -d` to rebuild and start fresh containers.
-- Wait for ALL containers to be healthy/running and stable (not restarting) before proceeding.
-- Only after containers are verified stable, run the test suite.
-- If tests still fail, check container logs with `docker compose logs <service>` for debugging.
+4. Wait for all containers to be healthy or running (timeout 300 seconds):
+   ```bash
+   timeout=300
+   deadline=$((SECONDS + timeout))
+   services=$(docker compose ps --services)
+   for s in $services; do
+     container=$(docker compose ps -q "$s")
+     while [[ $SECONDS -lt $deadline ]]; do
+       status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)
+       [[ "$status" == "healthy" || "$status" == "running" ]] && break || sleep 2
+     done
+   done
+   ```
 
-## Change Detection Paths
+5. Verify containers are stable (not restarting) for at least 10 seconds:
+   ```bash
+   sleep 10
+   docker compose ps
+   ```
 
-- `api/**`
-- `cir/**`
-- `src/**`
-- `core/**`
+6. Run tests: `dotnet test <solution>` or fall back to `make test` / `pytest`
 
-## Steps
+7. If tests still fail, check container logs for issues:
+   ```bash
+   docker compose logs --tail=100
+   docker compose logs <specific-service>
+   ```
 
-1. Check for changes in `api/` or core project directories
-2. If changes detected: run `docker compose down` to tear down existing containers
-3. Run `docker compose up --build -d` to rebuild and start containers
-4. Wait for containers to report HEALTH=healthy or State=running
-5. Verify containers are stable (not restarting) for at least 10 seconds
-6. Run tests: `dotnet test <solution>` or fallback to `make test` / `pytest`
-7. If tests fail, check `docker compose logs` for container issues
-
-## Container Verification
-
-- Health check timeout: 300 seconds
-- Stability check: 10 seconds
-- Useful commands:
-  - `docker compose ps --format json`
-  - `docker compose logs --tail=50`
-
-## Examples
-
-**My tests are failing after I changed the API:**
-Run `docker compose down`, then `docker compose up --build -d`, wait for containers to be healthy and stable, then run tests.
-
-**Debug why the backend tests aren't passing:**
-Check for recent changes, tear down and rebuild containers, verify stability, run tests, and check logs if failures persist.
-
-**Tests were working yesterday but fail today:**
-Force a clean rebuild with `docker compose down && docker compose up --build -d`, verify all containers are stable, then run tests.
-
-## Notes
-
-The key difference from building-backend is that this skill enforces a full container teardown when changes are detected. This ensures no stale state interferes with debugging. Always verify container stability by checking that containers remain in 'running' state for at least 10 seconds without restarts.
+The key difference from `building-backend` is that this skill enforces a full container teardown when changes are detected, ensuring no stale state interferes with debugging.
